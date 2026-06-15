@@ -25,10 +25,27 @@ export default function Experiment({ experiment }) {
   useEffect(() => {
     // Track page view
     trackNovus('experiment_view', { experimentId: String(experiment.id), public_slug: experiment.public_slug });
+    if (typeof pendo !== 'undefined') {
+      pendo.track("experiment_view", {
+        experimentId: String(experiment.id),
+        public_slug: experiment.public_slug,
+        title: experiment.title,
+        cta_type: experiment.cta_type
+      });
+    }
   }, [experiment]);
 
   async function handleCTAClick() {
     trackNovus('experiment_cta_clicked', { experimentId: String(experiment.id), ctaLabel: experiment.cta_text });
+    if (typeof pendo !== 'undefined') {
+      pendo.track("experiment_cta_clicked", {
+        experimentId: String(experiment.id),
+        ctaLabel: experiment.cta_text,
+        cta_type: experiment.cta_type,
+        cta_destination: experiment.cta_destination,
+        public_slug: experiment.public_slug
+      });
+    }
 
     if (experiment.cta_type === 'link' && experiment.cta_destination) {
       window.location.href = experiment.cta_destination;
@@ -39,8 +56,22 @@ export default function Experiment({ experiment }) {
       // show simple inline capture
       setSubmitted(true);
       trackNovus('experiment_signed_up', { experimentId: String(experiment.id) });
+      if (typeof pendo !== 'undefined') {
+        pendo.track("experiment_signed_up", {
+          experimentId: String(experiment.id),
+          public_slug: experiment.public_slug,
+          cta_text: experiment.cta_text
+        });
+      }
       // optional: send email to server to persist (not storing PII in this example)
-      await fetch('/api/submissions', { method: 'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ experiment_id: experiment.id, email }) });
+      const subRes = await fetch('/api/submissions', { method: 'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ experiment_id: experiment.id, email }) });
+      if (typeof pendo !== 'undefined') {
+        pendo.track("email_submission_completed", {
+          experimentId: String(experiment.id),
+          public_slug: experiment.public_slug,
+          submission_success: subRes.ok
+        });
+      }
     }
   }
 

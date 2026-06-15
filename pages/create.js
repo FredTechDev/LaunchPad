@@ -24,8 +24,26 @@ export default function Create() {
     const data = await res.json();
     setLoading(false);
     if (res.ok) {
+      if (typeof pendo !== 'undefined') {
+        pendo.track("experiment_created", {
+          experimentId: String(data.id),
+          title: title,
+          hypothesis: hypothesis,
+          cta_type: ctaType,
+          cta_destination: ctaDest,
+          public_slug: data.public_slug
+        });
+      }
       router.push(`/experiments/${data.public_slug}`);
     } else {
+      if (typeof pendo !== 'undefined') {
+        pendo.track("experiment_creation_failed", {
+          error_message: String(data.error || 'Could not create').substring(0, 100),
+          title: title,
+          cta_type: ctaType,
+          cta_destination: ctaDest
+        });
+      }
       alert(data.error || 'Could not create');
     }
   }
